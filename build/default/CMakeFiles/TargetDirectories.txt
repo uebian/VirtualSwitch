@@ -1,0 +1,4 @@
+/home/zbc/eclipse-workspace/virtual_switch/build/default/CMakeFiles/rebuild_cache.dir
+/home/zbc/eclipse-workspace/virtual_switch/build/default/CMakeFiles/edit_cache.dir
+/home/zbc/eclipse-workspace/virtual_switch/build/default/CMakeFiles/virtual_switch_server.dir
+/home/zbc/eclipse-workspace/virtual_switch/build/default/CMakeFiles/virtual_switch_client.dir

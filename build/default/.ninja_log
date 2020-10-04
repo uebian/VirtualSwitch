@@ -1,0 +1,7 @@
+# ninja log v5
+0	185	1601790589050380471	CMakeFiles/virtual_switch_server.dir/utils.cpp.o	97184d3281ad0e17
+1	194	1601790589060380471	CMakeFiles/virtual_switch_client.dir/utils.cpp.o	236e3cbfb58a09ac
+1	464	1601790589330380460	CMakeFiles/virtual_switch_client.dir/virtual_switch_client.cpp.o	49fda470484dcda3
+465	535	1601790589400380457	virtual_switch_client	5f4d0142033f08f7
+0	595	1601790589460380455	CMakeFiles/virtual_switch_server.dir/virtual_switch_server.cpp.o	ce10ab4ab9aa5b20
+595	657	1601790589520380452	virtual_switch_server	218eb25e8cb6e5d

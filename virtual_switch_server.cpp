@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
 	int send_num;
 	char send_buf[10000] = "i am server!";
 
-	std::cout << "server started" << std::endl;
+	std::cout << "server started." << std::endl;
 	while (1) {
 		char *recv_buf = new char[10000];
 		struct sockaddr_in *addr_client = new struct sockaddr_in;

@@ -114,7 +114,8 @@ int main(int argc, char **argv) {
 	}
 
 	printf("Tap device: %s created\n", tun_name);
-	std::thread udp_process(processPacketFromUDP,(sockaddr*)ser_addr,client_fd ,tun_fd).detach();
+	std::thread udp_process(processPacketFromUDP,(sockaddr*)ser_addr,client_fd ,tun_fd);
+	udp_process.detach();
 	std::cout<<"start listening from interface..."<<std::endl;
 	while (1) {
 		nread = read(tun_fd, buffer, sizeof(buffer));//收包

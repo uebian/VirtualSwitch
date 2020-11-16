@@ -51,6 +51,7 @@ void processPacket(struct sockaddr_in *addr_client, char *recv_buf,
 	}
 	item = data.find(dmac);
 	if (item == data.end()) {
+		//处理广播包
 		for (int i = 0; i < 16; i++) {
 			if (i == port_num) {
 				continue;
@@ -60,7 +61,6 @@ void processPacket(struct sockaddr_in *addr_client, char *recv_buf,
 				memcpy(send_buf, &recv_buf[1], recv_num - 1);
 				int send_num = sendto(sock_fd, send_buf, recv_num - 1, 0,
 						clients[i], len);
-
 				if (send_num < 0) {
 					perror("sendto error:");
 				}
@@ -69,9 +69,9 @@ void processPacket(struct sockaddr_in *addr_client, char *recv_buf,
 	} else {
 		unsigned char send_buf[10000];
 		memcpy(send_buf, &recv_buf[1], recv_num - 1);
+
 		int send_num = sendto(sock_fd, send_buf, recv_num - 1, 0,
 				clients[item->second], len);
-
 		if (send_num < 0) {
 			perror("sendto error:");
 		}
@@ -105,11 +105,11 @@ int main(int argc, char **argv) {
 
 	int recv_num;
 	int send_num;
-	char send_buf[10000] = "i am server!";
-
 	std::cout << "server started." << std::endl;
+
+	char *recv_buf = new char[10000];
+
 	while (1) {
-		char *recv_buf = new char[10000];
 		struct sockaddr_in *addr_client = new struct sockaddr_in;
 		recv_num = recvfrom(sock_fd, recv_buf, 10000, 0,
 				(struct sockaddr*) addr_client, (socklen_t*) &len);
@@ -120,6 +120,7 @@ int main(int argc, char **argv) {
 					len).detach();
 		}
 	}
+	delete recv_buf;
 	close(sock_fd);
 	return 0;
 }

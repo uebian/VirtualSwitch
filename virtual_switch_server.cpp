@@ -19,12 +19,13 @@
 #include "utils.h"
 
 std::map<std::array<unsigned char, 6>, int> data;
-struct sockaddr *clients[16]; //16端口
+struct sockaddr clients[16]; //16端口
+bool connected[16];//已连接
 
 void processPacket(struct sockaddr_in *addr_client, char *recv_buf,
 		int recv_num, int sock_fd, int len) {
 	int port_num = (int) recv_buf[0];
-	clients[port_num] = (struct sockaddr*) addr_client;
+	clients[port_num] = *((struct sockaddr*) addr_client);
 	//std::cout << "received " << recv_num << " bytes from port " << port_num << std::endl;
 	std::array<unsigned char, 6> smac, dmac;
 	for (int i = 0; i < 6; i++) {
@@ -36,18 +37,19 @@ void processPacket(struct sockaddr_in *addr_client, char *recv_buf,
 	auto item = data.find(smac);
 	if (item == data.end()) {
 		char *smac_str = phex(&recv_buf[7], 6);
-		std::cout<<smac_str<<" connected on port "<<port_num<<std::endl;
+		std::cout << smac_str << " connected on port " << port_num << std::endl;
+		connected[port_num]=true;
 		free(smac_str);
 		data.insert(
 				std::pair<std::array<unsigned char, 6>, int>(smac, port_num));
 	} else {
-		if(item->second!=port_num){
+		if (item->second != port_num) {
 			item->second = port_num;
 			char *smac_str = phex(&recv_buf[7], 6);
-			std::cout<<smac_str<<" connected on port "<<port_num<<std::endl;
+			std::cout << smac_str << " connected on port " << port_num
+					<< std::endl;
 			free(smac_str);
 		}
-
 	}
 	item = data.find(dmac);
 	if (item == data.end()) {
@@ -56,11 +58,13 @@ void processPacket(struct sockaddr_in *addr_client, char *recv_buf,
 			if (i == port_num) {
 				continue;
 			}
-			if (clients[i] != 0) {
+			if (connected[i]) {
 				unsigned char send_buf[10000];
 				memcpy(send_buf, &recv_buf[1], recv_num - 1);
 				int send_num = sendto(sock_fd, send_buf, recv_num - 1, 0,
-						clients[i], len);
+						&clients[i], len);
+				char *smac_str = phex(&recv_buf[7], 6);
+				free(smac_str);
 				if (send_num < 0) {
 					perror("sendto error:");
 				}
@@ -71,7 +75,7 @@ void processPacket(struct sockaddr_in *addr_client, char *recv_buf,
 		memcpy(send_buf, &recv_buf[1], recv_num - 1);
 
 		int send_num = sendto(sock_fd, send_buf, recv_num - 1, 0,
-				clients[item->second], len);
+				&clients[item->second], len);
 		if (send_num < 0) {
 			perror("sendto error:");
 		}
@@ -107,10 +111,10 @@ int main(int argc, char **argv) {
 	int send_num;
 	std::cout << "server started." << std::endl;
 
-	char *recv_buf = new char[10000];
+	struct sockaddr_in *addr_client = new struct sockaddr_in;
 
 	while (1) {
-		struct sockaddr_in *addr_client = new struct sockaddr_in;
+		char *recv_buf = new char[10000];
 		recv_num = recvfrom(sock_fd, recv_buf, 10000, 0,
 				(struct sockaddr*) addr_client, (socklen_t*) &len);
 		if (recv_num < 0) {
@@ -120,7 +124,6 @@ int main(int argc, char **argv) {
 					len).detach();
 		}
 	}
-	delete recv_buf;
 	close(sock_fd);
 	return 0;
 }

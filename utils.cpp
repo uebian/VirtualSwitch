@@ -19,7 +19,7 @@
  *
  * The string should be deallocated using `free()` by the caller.
  */
-char *phex(const void *p, size_t n)
+char *phex(const void *p, unsigned long n)
 {
     const unsigned char *cp =(const unsigned char *) p;              /* Access as bytes. */
     char *s = (char*)malloc(2*n + 1);       /* 2*n hex digits, plus NUL. */

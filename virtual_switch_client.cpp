@@ -18,41 +18,22 @@
 
 //using namespace std;
 
-void processPacketFromTAP(int fd, struct sockaddr *dst, unsigned char *buffer,
-		int nread, int port_num) {
-	/*unsigned char smac[6], dmac[6];
-	 //解析源MAC和目的MAC
-	 memcpy(dmac, &buffer[0], 6);
-	 memcpy(smac, &buffer[6], 6);
-	 unsigned char buf[10000];*/
-	socklen_t len;
-	len = sizeof(*dst);
-	unsigned char buf[10000];
-	memcpy(&buf[1], buffer, nread);
-	buf[0] = port_num;
-	sendto(fd, buf, nread + 1, 0, dst, len);
-	//printf("sent %d bytes.\n",nread + 1);
-
-
-}
-
-void processPacketFromUDP(struct sockaddr *dst, int socks_fd,int tun_fd) {
-	std::cout<<"UDP received process thread started."<<std::endl;
+void processPacketFromUDP(struct sockaddr *dst, int socks_fd, int tun_fd) {
+	std::cout << "UDP received process thread started." << std::endl;
 	unsigned char buf[10000];
 	struct sockaddr_in src;
 	socklen_t len;
 	len = sizeof(*dst);
 	int recv_num;
 	while (1) {
-		recv_num = recvfrom(socks_fd, buf, sizeof(buf), 0, (struct sockaddr*) &src,
-				&len); //接收来自server的信息
+		recv_num = recvfrom(socks_fd, buf, sizeof(buf), 0,
+				(struct sockaddr*) &src, &len); //接收来自server的信息
 		if (recv_num < 0) {
 			perror("recvfrom error:");
 		} else {
 			write(tun_fd, buf, recv_num);
-			/*char* contents_sent=phex(buffer, nread);
-			 printf("Write %d bytes to tun/tap device, that's %s\n", nread,contents_sent);
-			 free(contents_sent);*/
+			/*char* contents_sent=phex(buffer, nread);*/
+			//printf("Write %d bytes to tun/tap device.\n", recv_num);
 		}
 	}
 	printf("server:%s\n", buf);
@@ -76,8 +57,6 @@ int tap_alloc(char *dev, int flags) {
 		close(fd);
 		return err;
 	}
-	// 一旦设备开启成功，系统会给设备分配一个名称，对于tun设备，一般为tunX，X为从0开始的编号；
-	// 对于tap设备，一般为tapX
 	strcpy(dev, ifr.ifr_name);
 	return fd;
 }
@@ -88,21 +67,19 @@ int main(int argc, char **argv) {
 	int port, port_num;
 	std::cin >> ip >> port >> port_num;
 	int client_fd;
-	struct sockaddr_in* ser_addr=new struct sockaddr_in;
+	struct sockaddr_in *ser_addr = new struct sockaddr_in;
 
 	client_fd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (client_fd < 0) {
-		printf("create socket fail!\n");
+		printf("Create socket fail!\n");
 		return -1;
 	}
-
 	memset(ser_addr, 0, sizeof(*ser_addr));
 	ser_addr->sin_family = AF_INET;
 	ser_addr->sin_addr.s_addr = inet_addr(ip.c_str());
 	//ser_addr.sin_addr.s_addr = htonl(INADDR_ANY);  //注意网络序转换
 	ser_addr->sin_port = htons(port);  //注意网络序转换
 	int tun_fd, nread;
-	unsigned char buffer[10000];
 	char tun_name[IFNAMSIZ];
 
 	tun_name[0] = '\0';
@@ -114,33 +91,22 @@ int main(int argc, char **argv) {
 	}
 
 	printf("Tap device: %s created\n", tun_name);
-	std::thread udp_process(processPacketFromUDP,(sockaddr*)ser_addr,client_fd ,tun_fd);
+	std::thread udp_process(processPacketFromUDP, (sockaddr*) ser_addr,
+			client_fd, tun_fd);
 	udp_process.detach();
-	std::cout<<"start listening from interface..."<<std::endl;
+	std::cout << "Start listening from interface..." << std::endl;
+	unsigned char buffer[10001];
+	buffer[0] = port_num;
 	while (1) {
-		nread = read(tun_fd, buffer, sizeof(buffer));//收包
+		nread = read(tun_fd, &buffer[1], sizeof(buffer) - 1);  //收包
 		if (nread < 0) {
 			perror("Reading from interface");
 			close(tun_fd);
 			exit(1);
 		}
-		std::thread(processPacketFromTAP, client_fd, (sockaddr*)ser_addr, buffer, nread,port_num).detach();
+		sendto(client_fd, buffer, nread + 1, 0, (sockaddr*) ser_addr,
+				sizeof(*ser_addr));
 		//char *contents_received = phex(buffer, nread);
-
-		/*char *smac_str = phex(smac, 6);
-		 char *dmac_str = phex(dmac, 6);
-		 printf("Read %d bytes from tun/tap device, SMAC:%s, DMAC:%s\n", nread,
-		 smac_str, dmac_str);
-		 free(contents_received);
-		 free(smac_str);
-		 free(dmac_str);*/
-		//buffer[20] = 0;
-		//*((unsigned short*) &buffer[22]) += 8;
-		// 发包
-		/*nread = write(tun_fd, buffer, nread);
-		 char* contents_sent=phex(buffer, nread);
-		 printf("Write %d bytes to tun/tap device, that's %s\n", nread,contents_sent);
-		 free(contents_sent);*/
 	}
 	return 0;
 }

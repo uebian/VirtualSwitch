@@ -4,7 +4,7 @@ project (virtual_switch)
 
 find_package(Threads)
 
-
+add_compile_options(-g)
 
 add_executable(virtual_switch_client virtual_switch_client.cpp utils.cpp)
 add_executable(virtual_switch_server virtual_switch_server.cpp utils.cpp)
